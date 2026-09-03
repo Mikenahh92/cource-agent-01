@@ -1,0 +1,7 @@
+total_requests: 12000
+/api/items: 2014 requests, 503253ms total
+/api/orders: 2037 requests, 521504ms total
+/api/users: 2032 requests, 513976ms total
+/health: 2016 requests, 496962ms total
+/login: 1959 requests, 488898ms total
+/metrics: 1942 requests, 500351ms total

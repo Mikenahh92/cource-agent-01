@@ -9,8 +9,10 @@ Target repo for the AI Agent Development workshop final assignment.
 | `python/` | Python assignment issue |
 | `typescript/` | TypeScript assignment issue |
 
-Build an agent that retrieves the issue, fixes the code, and opens a pull request.
+Each project is a small **access-log analyzer** that is far too slow.
+Your agent must find out why and fix it.
 
 Rules:
 - No direct commits to `main` — pull requests only.
 - Name your branch `fix/<your-name>`.
+- The report output must stay **byte-identical** (`expected_report.txt` / `expected-report.txt`).
