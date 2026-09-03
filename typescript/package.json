@@ -1,0 +1,12 @@
+{
+  "name": "slow-sorter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "benchmark": "tsx benchmark.ts",
+    "test": "tsx --test test_sorter.test.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
