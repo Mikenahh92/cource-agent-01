@@ -13,34 +13,27 @@ The output must stay byte-identical to expected_report.txt.
 """
 
 import re
+from operator import itemgetter
+
+# Compiled once at import time; one alternation covers all levels.
+_ENTRY_RE = re.compile(r"^(\d+) (INFO|WARN|ERROR|DEBUG) (\S+) (\d+) (\d+)ms$")
 
 
 def load_lines(path, chunk_size=500):
-    """Load lines in chunks. (Reads the file fresh for every chunk.)"""
-    lines = []
-    total = 0
+    """Load lines, stripping trailing newlines. chunk_size kept for API compat."""
     with open(path) as f:
-        first = f.readlines()
-    total = len(first)
-    while len(lines) < total:
-        with open(path) as f:  # re-open and re-read for each chunk
-            lines.extend(f.readlines()[len(lines):len(lines) + chunk_size])
-    return [l.rstrip("\n") for l in lines]
+        return [l.rstrip("\n") for l in f]
 
 
 def parse(lines):
     """Parse raw lines into entries: ts, level, endpoint, status, ms."""
     entries = []
     for line in lines:
-        for level in ("INFO", "WARN", "ERROR", "DEBUG"):
-            # pattern rebuilt + recompiled for every line/level combination
-            pat = r"^(\d+) " + level + r" (\S+) (\d+) (\d+)ms$"
-            m = re.search(pat, line)
-            if m:
-                entries.append({"ts": int(m.group(1)), "level": level,
-                                "endpoint": m.group(2), "status": int(m.group(3)),
-                                "ms": int(m.group(4)), "raw": line})
-                break
+        m = _ENTRY_RE.match(line)
+        if m:
+            entries.append({"ts": int(m.group(1)), "level": m.group(2),
+                            "endpoint": m.group(3), "status": int(m.group(4)),
+                            "ms": int(m.group(5)), "raw": line})
     return entries
 
 
@@ -51,41 +44,39 @@ def filter_errors(entries):
 def dedupe(entries):
     """Keep the first occurrence of each duplicate line."""
     result = []
+    seen = set()
     for e in entries:
-        if e not in result:  # O(n^2) list membership
+        key = frozenset(e.items())  # hashable, order-independent dict identity
+        if key not in seen:
+            seen.add(key)
             result.append(e)
     return result
 
 
 def sort_by_time(entries):
-    arr = list(entries)
-    n = len(arr)
-    for i in range(n):  # bubble sort
-        for j in range(n - i - 1):
-            if arr[j]["ts"] > arr[j + 1]["ts"]:
-                arr[j], arr[j + 1] = arr[j + 1], arr[j]
-    return arr
+    # sorted() is stable and does not mutate the input (like the old bubble sort)
+    return sorted(entries, key=itemgetter("ts"))
 
 
 def aggregate(entries):
     """Count requests and total latency per endpoint."""
     report = {"total": len(entries), "endpoints": {}}
+    endpoints = report["endpoints"]
     for e in entries:
-        keys = [k for k in report["endpoints"].keys()]  # rescan every time
-        if e["endpoint"] not in keys:
-            report["endpoints"][e["endpoint"]] = {"count": 0, "total_ms": 0}
-        ep = report["endpoints"][e["endpoint"]]
+        ep = endpoints.get(e["endpoint"])
+        if ep is None:
+            ep = endpoints[e["endpoint"]] = {"count": 0, "total_ms": 0}
         ep["count"] += 1
         ep["total_ms"] += e["ms"]
     return report
 
 
 def render(report):
-    out = f"total_requests: {report['total']}\n"
+    lines = [f"total_requests: {report['total']}"]
     for ep in sorted(report["endpoints"].keys()):
         d = report["endpoints"][ep]
-        out += f"{ep}: {d['count']} requests, {d['total_ms']}ms total\n"
-    return out
+        lines.append(f"{ep}: {d['count']} requests, {d['total_ms']}ms total")
+    return "\n".join(lines) + "\n"
 
 
 def analyze(path="data/access.log"):
