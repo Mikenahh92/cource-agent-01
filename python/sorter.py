@@ -1,15 +1,10 @@
-"""Sorter module. See ISSUE.md — this is embarrassingly slow."""
+"""Sorter module. See ISSUE.md — use the built-in Timsort (O(n log n))."""
 
 
 def sort(data):
     """Sort a list of integers and return a new sorted list.
 
-    Uses a hand-rolled bubble sort because "it was easy to write".
+    Delegates to Python's built-in sorted(), which uses Timsort.
+    Returns a new list; the input is not mutated.
     """
-    items = list(data)
-    n = len(items)
-    for i in range(n):
-        for j in range(0, n - i - 1):
-            if items[j] > items[j + 1]:
-                items[j], items[j + 1] = items[j + 1], items[j]
-    return items
+    return sorted(data)
