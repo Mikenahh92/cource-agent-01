@@ -1,12 +1,11 @@
 {
-  "name": "slow-sorter",
+  "name": "log-analyzer",
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "generate": "tsx generate-logs.ts",
     "benchmark": "tsx benchmark.ts",
-    "test": "tsx --test test_sorter.test.ts"
+    "test": "tsx --test test_analyzer.test.ts"
   },
-  "devDependencies": {
-    "tsx": "^4.19.0"
-  }
+  "devDependencies": { "tsx": "^4.19.0" }
 }
